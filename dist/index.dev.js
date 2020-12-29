@@ -6,9 +6,9 @@ google.charts.load('current', {
   mapsApiKey: 'AIzaSyD-9tSrke72PouQMnMX-a7eZSW0jkFMBWY'
 }); // function untuk memasukan data kepada maps
 
-function drawRegionsMap(a) {
+function drawRegionsMap(datas) {
   var o = [['Country', 'Jumlah Kasus']];
-  a.forEach(function (a) {
+  datas.forEach(function (a) {
     o.push([a.CountryCode, a.TotalConfirmed]);
   });
   var e = google.visualization.arrayToDataTable(o);
@@ -26,8 +26,8 @@ function indovsglobal(a, o) {
   e.addColumn('string', 'Tipe Kasus'), e.addColumn('number', 'jumlah'), e.addRows([['Dunia', a.TotalConfirmed], ['Indonesia', o.TotalConfirmed]]);
   new google.visualization.ColumnChart(document.getElementById('indovsglobal')).draw(e, {
     title: 'Perbandingan Kasus Indonesia di Dunia',
-    width: '700',
-    height: '600',
+    width: '590',
+    height: '500',
     backgroundColor: '#f8f9fa'
   });
 } // function untuk memasukan data kepada pie chart
@@ -38,8 +38,8 @@ function global(a) {
   o.addColumn('string', 'Tipe Kasus'), o.addColumn('number', 'Jumlah'), o.addRows([['Sembuh', a.TotalRecovered], ['Meninggal', a.TotalDeaths], ['Kasus Aktif', a.TotalConfirmed - a.TotalRecovered - a.TotalDeaths]]);
   new google.visualization.PieChart(document.getElementById('chart_div')).draw(o, {
     title: 'Data Kasus Corona Virus di Dunia',
-    width: '700',
-    height: '600',
+    width: '590',
+    height: '500',
     backgroundColor: '#f8f9fa'
   });
 } // mengambil data
@@ -64,8 +64,9 @@ var isiGlobal = function isiGlobal(a) {
 
 
 var dataSet = [];
+var dataProvinsi = [];
 $(document).ready(function () {
-  getData();
+  google.charts.setOnLoadCallback(getData);
   $('.listProvinsi').select2({
     placeholder: 'Pilih Provinsi',
     allowClear: true
@@ -80,9 +81,17 @@ $(document).ready(function () {
     dataSort.forEach(function (e) {
       var a = e.attributes;
       dataSet.push([a.Provinsi, a.Kasus_Posi, a.Kasus_Semb, a.Kasus_Posi - a.Kasus_Semb - a.Kasus_Meni, a.Kasus_Meni]);
-      console.log(a);
+      dataProvinsi.push({
+        provinsi: a.Provinsi,
+        positif: a.Kasus_Posi,
+        sembuh: a.Kasus_Semb,
+        dirawat: a.Kasus_Posi - a.Kasus_Semb - a.Kasus_Meni,
+        meninggal: a.Kasus_Meni,
+        kode: a.Kode_Provi
+      });
       $('.listProvinsi').append("\n          <option value=\"".concat(a.Kode_Provi, "\">").concat(a.Provinsi, "</option>\n        "));
     });
+    $('.listProvinsi').trigger('change');
     $('#example').DataTable({
       data: dataSet,
       columns: [{
@@ -103,5 +112,23 @@ $(document).ready(function () {
   });
 });
 $('.listProvinsi').change(function () {
-  alert($('.listProvinsi').val());
+  var data;
+  var id = $('.listProvinsi').val();
+  data = dataProvinsi.find(function (e) {
+    return e.kode == id;
+  });
+  setTimeout(function () {
+    provinsiChart(data);
+  }, 400);
 });
+
+function provinsiChart(a) {
+  var o = new google.visualization.DataTable();
+  o.addColumn('string', 'Tipe Kasus'), o.addColumn('number', 'Jumlah'), o.addRows([['Sembuh', a.sembuh], ['Meninggal', a.meninggal], ['Kasus Aktif', a.dirawat]]);
+  new google.visualization.PieChart(document.getElementById('chart_provinsi')).draw(o, {
+    title: "Data Kasus Corona Provinsi ".concat(a.provinsi),
+    width: '800',
+    height: '500',
+    backgroundColor: '#f8f9fa'
+  });
+}

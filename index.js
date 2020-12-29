@@ -5,9 +5,9 @@ google.charts.load('current', {
 });
 
 // function untuk memasukan data kepada maps
-function drawRegionsMap(a) {
+function drawRegionsMap(datas) {
   let o = [['Country', 'Jumlah Kasus']];
-  a.forEach((a) => {
+  datas.forEach((a) => {
     o.push([a.CountryCode, a.TotalConfirmed]);
   });
   let e = google.visualization.arrayToDataTable(o);
@@ -34,8 +34,8 @@ function indovsglobal(a, o) {
     document.getElementById('indovsglobal'),
   ).draw(e, {
     title: 'Perbandingan Kasus Indonesia di Dunia',
-    width: '700',
-    height: '600',
+    width: '590',
+    height: '500',
     backgroundColor: '#f8f9fa',
   });
 }
@@ -54,8 +54,8 @@ function global(a) {
     o,
     {
       title: 'Data Kasus Corona Virus di Dunia',
-      width: '700',
-      height: '600',
+      width: '590',
+      height: '500',
       backgroundColor: '#f8f9fa',
     },
   );
@@ -101,8 +101,9 @@ let isiGlobal = (a) => {
 
 // melakukan sesuatu ketika window load
 let dataSet = [];
+let dataProvinsi = [];
 $(document).ready(function () {
-  getData();
+  google.charts.setOnLoadCallback(getData);
   $('.listProvinsi').select2({
     placeholder: 'Pilih Provinsi',
     allowClear: true,
@@ -128,11 +129,19 @@ $(document).ready(function () {
           a.Kasus_Posi - a.Kasus_Semb - a.Kasus_Meni,
           a.Kasus_Meni,
         ]);
-        console.log(a);
+        dataProvinsi.push({
+          provinsi: a.Provinsi,
+          positif: a.Kasus_Posi,
+          sembuh: a.Kasus_Semb,
+          dirawat: a.Kasus_Posi - a.Kasus_Semb - a.Kasus_Meni,
+          meninggal: a.Kasus_Meni,
+          kode: a.Kode_Provi,
+        });
         $('.listProvinsi').append(`
           <option value="${a.Kode_Provi}">${a.Provinsi}</option>
         `);
       });
+      $('.listProvinsi').trigger('change');
       $('#example').DataTable({
         data: dataSet,
         columns: [
@@ -161,5 +170,29 @@ $(document).ready(function () {
 });
 
 $('.listProvinsi').change(function () {
-  alert($('.listProvinsi').val());
+  let data;
+  let id = $('.listProvinsi').val();
+  data = dataProvinsi.find((e) => e.kode == id);
+  setTimeout(function () {
+    provinsiChart(data);
+  }, 400);
 });
+
+function provinsiChart(a) {
+  let o = new google.visualization.DataTable();
+  o.addColumn('string', 'Tipe Kasus'),
+    o.addColumn('number', 'Jumlah'),
+    o.addRows([
+      ['Sembuh', a.sembuh],
+      ['Meninggal', a.meninggal],
+      ['Kasus Aktif', a.dirawat],
+    ]);
+  new google.visualization.PieChart(
+    document.getElementById('chart_provinsi'),
+  ).draw(o, {
+    title: `Data Kasus Corona Provinsi ${a.provinsi}`,
+    width: '800',
+    height: '500',
+    backgroundColor: '#f8f9fa',
+  });
+}
