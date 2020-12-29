@@ -1,94 +1,61 @@
 "use strict";
 
-google.charts.load('current', {
-  packages: ['corechart', 'geochart'],
-  // Note: you will need to get a mapsApiKey for your project.
-  // See: https://developers.google.com/chart/interactive/docs/basic_load_libs#load-settings
-  mapsApiKey: 'AIzaSyD-9tSrke72PouQMnMX-a7eZSW0jkFMBWY'
-});
-
-function drawRegionsMap(allData) {
-  var database = [['Country', 'Jumlah Kasus']];
-  allData.forEach(function (e) {
-    database.push([e.CountryCode, e.TotalConfirmed]);
+function drawRegionsMap(a) {
+  var o = [["Country", "Jumlah Kasus"]];
+  a.forEach(function (a) {
+    o.push([a.CountryCode, a.TotalConfirmed]);
   });
-  var data = google.visualization.arrayToDataTable(database);
-  var options = {
-    backgroundColor: '#f8f9fa',
+  var e = google.visualization.arrayToDataTable(o);
+  new google.visualization.GeoChart(document.getElementById("regions_div")).draw(e, {
+    backgroundColor: "#f8f9fa",
     colorAxis: {
-      colors: ['#ffffff', '#DFFF00', '#FFBF00', '#e31b23', '#C70039']
+      colors: ["#ffffff", "#DFFF00", "#FFBF00", "#e31b23", "#C70039"]
     }
-  };
-  var chart = new google.visualization.GeoChart(document.getElementById('regions_div'));
-  chart.draw(data, options);
-} // Mengisi data dan menampilkan chart global vs indonesia
-// sesuai dengan data yang diterima
+  });
+}
 
+function indovsglobal(a, o) {
+  var e = new google.visualization.DataTable();
+  e.addColumn("string", "Tipe Kasus"), e.addColumn("number", "jumlah"), e.addRows([["Dunia", a.TotalConfirmed], ["Indonesia", o.TotalConfirmed]]);
+  new google.visualization.ColumnChart(document.getElementById("indovsglobal")).draw(e, {
+    title: "Perbandingan Kasus Indonesia di Dunia",
+    width: "700",
+    height: "600",
+    backgroundColor: "#f8f9fa"
+  });
+}
 
-function indovsglobal(global, indo) {
-  // Create the data table.
-  var data = new google.visualization.DataTable();
-  data.addColumn('string', 'Tipe Kasus');
-  data.addColumn('number', 'jumlah');
-  data.addRows([['Dunia', global.TotalConfirmed], ['Indonesia', indo.TotalConfirmed]]); // Set chart options
-
-  var options = {
-    title: 'Perbandingan Kasus Indonesia di Dunia',
-    width: '700',
-    height: '600',
-    backgroundColor: '#f8f9fa'
-  };
-  var chart = new google.visualization.ColumnChart(document.getElementById('indovsglobal'));
-  chart.draw(data, options);
-} // Mengisi data dan menampilkan chart covid di dunia
-// sesuai dengan data yang diterima
-
-
-function global(global) {
-  // Create the data table.
-  var data = new google.visualization.DataTable();
-  data.addColumn('string', 'Tipe Kasus');
-  data.addColumn('number', 'Jumlah');
-  data.addRows([['Sembuh', global.TotalRecovered], ['Meninggal', global.TotalDeaths], ['Kasus Aktif', global.TotalConfirmed - global.TotalRecovered - global.TotalDeaths]]); // Set chart options
-
-  var options = {
-    title: 'Data Kasus Corona Virus di Dunia',
-    width: '700',
-    height: '600',
-    backgroundColor: '#f8f9fa'
-  }; // Instantiate and draw our chart, passing in some options.
-
-  var chart = new google.visualization.PieChart(document.getElementById('chart_div'));
-  chart.draw(data, options);
-} // Mengambil data dari API
-
+function global(a) {
+  var o = new google.visualization.DataTable();
+  o.addColumn("string", "Tipe Kasus"), o.addColumn("number", "Jumlah"), o.addRows([["Sembuh", a.TotalRecovered], ["Meninggal", a.TotalDeaths], ["Kasus Aktif", a.TotalConfirmed - a.TotalRecovered - a.TotalDeaths]]);
+  new google.visualization.PieChart(document.getElementById("chart_div")).draw(o, {
+    title: "Data Kasus Corona Virus di Dunia",
+    width: "700",
+    height: "600",
+    backgroundColor: "#f8f9fa"
+  });
+}
 
 function getData() {
-  axios.get('https://api.covid19api.com/summary').then(function (res) {
-    global(res.data.Global);
-    isiGlobal(res.data.Global);
-    var indo = res.data.Countries.find(function (e) {
-      return e.Country === 'Indonesia';
+  axios.get("https://api.covid19api.com/summary").then(function (a) {
+    global(a.data.Global), isiGlobal(a.data.Global);
+    var o = a.data.Countries.find(function (a) {
+      return "Indonesia" === a.Country;
     });
-    indovsglobal(res.data.Global, indo);
-    drawRegionsMap(res.data.Countries);
-  })["catch"](function (err) {
-    console.log(err);
+    indovsglobal(a.data.Global, o), drawRegionsMap(a.data.Countries);
+  })["catch"](function (a) {
+    console.log(a);
   });
-} // Mengisi data ke class yang sudah di sediakan
+}
 
+google.charts.load("current", {
+  packages: ["corechart", "geochart"],
+  mapsApiKey: "AIzaSyD-9tSrke72PouQMnMX-a7eZSW0jkFMBWY"
+});
 
-var isiGlobal = function isiGlobal(data) {
-  $('.total_konfirmasi').html(data.TotalConfirmed);
-  $('.total_meninggal').html(data.TotalDeaths);
-  $('.total_sembuh').html(data.TotalRecovered);
-  $('.total_dirawat').html(data.TotalConfirmed - data.TotalRecovered - data.TotalDeaths);
-  $('.new_konfirmasi').html("+".concat(data.NewConfirmed, " Kasus"));
-  $('.persen_meninggal').html("".concat((data.TotalDeaths / data.TotalConfirmed * 100).toFixed(2), "%"));
-  $('.persen_sembuh').html("".concat((data.TotalRecovered / data.TotalConfirmed * 100).toFixed(2), "%"));
-  $('.persen_dirawat').html("".concat(((data.TotalConfirmed - data.TotalRecovered - data.TotalDeaths) / data.TotalConfirmed * 100).toFixed(2), "%"));
-}; // Memanggil function getData() ketika window load
-
+var isiGlobal = function isiGlobal(a) {
+  $(".total_konfirmasi").html(a.TotalConfirmed), $(".total_meninggal").html(a.TotalDeaths), $(".total_sembuh").html(a.TotalRecovered), $(".total_dirawat").html(a.TotalConfirmed - a.TotalRecovered - a.TotalDeaths), $(".new_konfirmasi").html("+".concat(a.NewConfirmed, " Kasus")), $(".persen_meninggal").html("".concat((a.TotalDeaths / a.TotalConfirmed * 100).toFixed(2), "%")), $(".persen_sembuh").html("".concat((a.TotalRecovered / a.TotalConfirmed * 100).toFixed(2), "%")), $(".persen_dirawat").html("".concat(((a.TotalConfirmed - a.TotalRecovered - a.TotalDeaths) / a.TotalConfirmed * 100).toFixed(2), "%"));
+};
 
 window.onload = function () {
   getData();
